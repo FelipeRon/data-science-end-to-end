@@ -42,7 +42,7 @@ docker run procesar-ventas
 
 **Respuesta 1, antes de ver la solución:** el Dockerfile fija `python:3.11-slim` y no solo `python`. ¿Qué cambiaría en un año si dijera solo `python`?
 
-_(tu respuesta)_
+_(tu respuesta)_ La version de Python no se quedaria  en la 3.11-slim, sino se actualizaria a la vercion actual dentro de 1 año
 
 **Respuesta 2 (TODO 1):** si cambias una línea de `procesar.py` y vuelves a construir, ¿qué pasos se repiten? ¿Cómo reordenarías las líneas para que `pip install` no se repita?
 

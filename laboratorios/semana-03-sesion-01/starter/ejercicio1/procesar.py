@@ -12,5 +12,6 @@ if __name__ == "__main__":
     resumen = resumen.sort_values("monto", ascending=False)
     resumen.to_csv(SALIDA, index=False)
     print("Resumen de ventas por producto:")
+    print("-----------------------")
     print(resumen.to_string(index=False))
     print(f"Guardado en {SALIDA}")
