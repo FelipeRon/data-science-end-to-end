@@ -59,3 +59,17 @@ git push origin pset-02
 Califico el proyecto tal como quedó en ese tag. Como el proyecto sigue creciendo después de cada entrega, el tag deja fija la versión que corresponde a cada PSet: lo que cambies después cuenta para el siguiente, no para este. Si necesitas corregir algo antes de la fecha de entrega, mueve el tag con `git tag -f pset-02` y `git push -f origin pset-02`.
 
 Antes de marcar el tag, reinicia el kernel y corre todo (**Restart** y después **Run All**) en cada notebook de la entrega, y comprueba que cada script corre desde una terminal nueva.
+
+
+## Requisitos antes de esta sesión
+
+1. **Docker**, el mismo de las sesiones pasadas. Si trabajas en el Codespace, ábrelo para esta sesión con una máquina de 4 núcleos ("Change machine type"): Kestra y su Postgres necesitan más memoria que los laboratorios anteriores.
+2. Levanta Kestra localmente antes de la sesión, con el `docker-compose.yml` de [`starter/docker-compose.yml`](./starter/docker-compose.yml):
+   ```
+   docker compose up -d
+   ```
+   Abre `localhost:8080` en el navegador (en el Codespace, desde la pestaña **Ports** de VS Code, puerto 8080): deberías ver la pantalla de inicio de sesión de Kestra. Entra con el usuario `admin@kestra.io` y la contraseña `Admin1234`, definidos en el mismo `docker-compose.yml`. Si es la primera vez que arranca, puede tardar 20-30 segundos en quedar lista.
+
+Este `docker-compose.yml` es una versión simplificada del oficial de Kestra: quita el `healthcheck` de Postgres (fuera del vocabulario de Docker Compose de este curso) porque el reintento de conexión, igual que en la Sesión 2 de la semana pasada, se resuelve del lado de cada flow, no de Docker.
+
+bash ../subir_a_kestra.sh flow_ingesta.yml ingesta_csv.py

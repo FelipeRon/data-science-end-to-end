@@ -1,0 +1,35 @@
+id: descargar_ai4i
+namespace: pset2
+
+tasks:
+  - id: descargar
+    type: io.kestra.plugin.core.http.Download
+    uri: "https://archive.ics.uci.edu/static/public/601/ai4i%2B2020%2Bpredictive%2Bmaintenance%2Bdataset.zip"
+    retry:
+      type: constant
+      interval: PT30S
+      maxAttempts: 3
+  - id: extraer
+    type: io.kestra.plugin.compress.ArchiveDecompress
+    from: "{{ outputs.descargar.uri }}"
+    algorithm: ZIP
+
+triggers:
+  - id: semanal
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 8 * * 5"
+    timezone: America/Guayaquil
+
+afterExecution:
+  - id: upload
+    type: io.kestra.plugin.jdbc.snowflake.Upload
+    fileName: ai4i2020.csv
+    from: "{{ outputs.extraer.files['ai4i2020.csv']}}"
+    prefix: uci
+    stageName: "@PSET2_MANTENIMIENTO.RAW.%AI4I"
+    url: jdbc:snowflake://MRIWLBX-HH95628.snowflakecomputing.com
+    database: PSET2_MANTENIMIENTO
+    privateKey: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+    privateKeyPassword: "{{ secret('SNOWFLAKE_KEY_PASSWORD') }}"
+    username: PSET2_KESTRA
+    role: PSET2_INGEST

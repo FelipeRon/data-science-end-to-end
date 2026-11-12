@@ -2,11 +2,26 @@ version: 2
 
 models:
   - name: stg_clientes
+    descibe: Tabla staging de los clientes de la empresa
     columns:
       - name: id_cliente
+        descibe: Identificador unico de cada cliente
         tests:
           - unique
           - not_null
 
-  # TODO 2: agrega stg_pedidos, con las pruebas unique y not_null sobre
-  # la columna que identifica cada pedido.
+  - name: stg_pedidos
+    descibe: Tabla staging de los pedidos de la empresa
+    columns:
+      - name: id_pedido
+        descibe: Identificador unico de stg_pedidos
+        tests:
+          - unique
+          - not_null
+      - name: id_cliente
+        descibe: Idintificador del cliente
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_clientes')
+              field: id_cliente
