@@ -3,11 +3,13 @@
 **/.env*
 **/*.p8
 **/*.pub
+**/*.pem
+**/*.der
+**/*.key
 **/__pycache__
 .pytest_cache
 output
 dbt/target
 dbt/logs
-kestra/.backup*
 .backup*
-
+kestra/.backup*

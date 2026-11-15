@@ -15,10 +15,10 @@
     "ghcr.io/devcontainers/features/terraform:1": {}
   },
 
-  // Minimo de Codespaces: la maquina de 2 nucleos (8 GB de RAM). Kestra y el
-  // laboratorio integrador piden cambiar a 4 nucleos en su README.
+  // PSet 2 ejecuta Kestra y Spark: al menos 4 nucleos. Cambiar la maquina de un
+  // Codespace ya existente si no cumple este minimo antes de reconstruir.
   "hostRequirements": {
-    "cpus": 2,
+    "cpus": 4,
     "memory": "8gb",
     "storage": "32gb"
   },
@@ -38,11 +38,11 @@
   // laboratorio con docker compose, y el servicio de prediccion, uvicorn o docker run.
   // VS Code detecta su puerto al arrancar y lo muestra en Ports con esta etiqueta. Cualquier otro puerto (los que abren VS Code y los
   // kernels de Jupyter para uso interno) no se reenvia ni aparece en Ports.
-  "forwardPorts": [5050],
+  "forwardPorts": [5050, 8080],
   "portsAttributes": {
     "5050": { "label": "MLflow (Semana 11)", "onAutoForward": "notify" },
     "8000": { "label": "Servicio de predicción (Semana 12)", "onAutoForward": "notify" },
-    "8080": { "label": "Kestra (Semanas 4 y 7)", "onAutoForward": "notify" },
+    "8080": { "label": "Kestra / PSet 2", "onAutoForward": "notify" },
     "8085": { "label": "pgAdmin (Semanas 3 y 7)", "onAutoForward": "notify" },
     "5432": { "label": "Postgres (Semanas 3 y 7)", "onAutoForward": "silent" },
     "9092": { "label": "Redpanda / Kafka (Semana 6)", "onAutoForward": "silent" }
@@ -55,11 +55,14 @@
   // de detener el Codespace), porque los procesos no sobreviven a un reinicio.
   "onCreateCommand": "bash .devcontainer/on-create.sh",
   "postCreateCommand": "bash .devcontainer/verificar.sh",
-  "postStartCommand": "bash .devcontainer/mlflow-server.sh",
+  "postStartCommand": {
+    "mlflow": "bash .devcontainer/mlflow-server.sh",
+    "pset2": "bash psets/pset-02/scripts/codespaces.sh prepare --optional"
+  },
 
   "customizations": {
     "codespaces": {
-      "openFiles": ["README.md"]
+      "openFiles": ["psets/pset-02/README.md", "README.md"]
     },
     "vscode": {
       "extensions": [
@@ -81,3 +84,4 @@
 
   "remoteUser": "vscode"
 }
+

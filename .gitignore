@@ -46,3 +46,14 @@ mlartifacts/
 
 # Material reemplazado (no se sube)
 _to_delete/
+
+# Credenciales locales / Codespaces (Base64 tambien es secreto)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.p8
+*.pem
+*.der
+*.key
+

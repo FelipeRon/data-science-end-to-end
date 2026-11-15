@@ -35,8 +35,8 @@ services:
         kestra:
           server:
             basic-auth:
-              username: ${KESTRA_USER:-admin@kestra.io}
-              password: ${KESTRA_PASSWORD:-Admin1234}
+              username: ${KESTRA_USER_JSON:-"admin@kestra.io"}
+              password: ${KESTRA_PASSWORD_JSON:-"Admin1234"}
           repository:
             type: postgres
           storage:
@@ -48,7 +48,7 @@ services:
           tasks:
             tmp-dir:
               path: /tmp/kestra-wd/tmp
-          url: http://localhost:8080/
+          url: ${KESTRA_URL:-http://localhost:8080/}
     ports:
       - "8080:8080"
     depends_on:
@@ -75,4 +75,5 @@ services:
 volumes:
   datos_postgres:
   datos_kestra:
+
 
