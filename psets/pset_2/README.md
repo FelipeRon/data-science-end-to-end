@@ -122,6 +122,8 @@ No usar `down -v` para diagnosticar: eliminaría datos persistentes. El proyecto
 
 ### Error al preparar la clave
 
-`SECRET_SNOWFLAKE_PRIVATE_KEY` acepta el PEM privado completo o su Base64, también con saltos de línea. Se normaliza internamente para Kestra sin imprimirlo. No ingresar una ruta ni una clave pública. `SECRET_SNOWFLAKE_KEY_PASSWORD` sigue esperando Base64 de la contraseña; omitirlo si la clave no está cifrada.
+`SECRET_SNOWFLAKE_PRIVATE_KEY` acepta el PEM privado completo o su Base64, también con saltos de línea. Se normaliza internamente para Kestra sin imprimirlo. No ingresar una ruta ni una clave pública. `SECRET_SNOWFLAKE_KEY_PASSWORD` acepta Base64 o texto directo. Para texto directo sin ambigüedad, usar `SECRET_SNOWFLAKE_KEY_PASSWORD_PLAIN`; tiene prioridad. Omitir ambos si la clave no está cifrada.
 
 Tras actualizar el repositorio, usar `bash kestra/scripts/codespaces.sh start && bash kestra/scripts/codespaces.sh run`: `&&` evita ejecutar el flow si falla la preparación. No pegar claves en el chat ni versionarlas.
+
+Contraseña de clave: se conserva compatibilidad con `SECRET_SNOWFLAKE_KEY_PASSWORD` en Base64 y se acepta texto directo cuando no es Base64 UTF-8 válido. Para una contraseña literal que también pudiera interpretarse como Base64, configurar únicamente `SECRET_SNOWFLAKE_KEY_PASSWORD_PLAIN`. Este secreto tiene prioridad y siempre se trata como texto literal, sin recortar espacios. Sin cifrado, dejar ambos secretos sin configurar. Después de cambiar Codespaces Secrets, detener e iniciar el Codespace antes de ejecutar `start`.

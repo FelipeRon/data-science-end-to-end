@@ -71,6 +71,18 @@ def normalize_private_key(value):
     pem += '\n'
     return pem, base64.b64encode(pem.encode('utf-8')).decode('ascii')
 
+
+def normalize_key_password(value, plain=None):
+    """Base64 historico o texto directo; la variable _PLAIN evita ambiguedad."""
+    if plain is not None:
+        return base64.b64encode(plain.encode('utf-8')).decode('ascii')
+    try:
+        decoded = base64.b64decode(value, validate=True).decode('utf-8')
+    except (ValueError, UnicodeDecodeError):
+        decoded = value
+    return base64.b64encode(decoded.encode('utf-8')).decode('ascii')
+
+
 def prepare(root=ROOT, environ=None, optional=False):
     env = dict(os.environ if environ is None else environ)
     local = read_env(root / '.env')
@@ -97,7 +109,8 @@ def prepare(root=ROOT, environ=None, optional=False):
         raise ValueError('La clave privada no puede estar vacía')
     password_b64 = env.get('SECRET_SNOWFLAKE_KEY_PASSWORD', '' if cloud else
                            local.get('SNOWFLAKE_PRIVATE_KEY_PASSWORD_B64', legacy.get('SECRET_SNOWFLAKE_KEY_PASSWORD', '')))
-    decode_secret(password_b64, 'SECRET_SNOWFLAKE_KEY_PASSWORD')
+    password_b64 = normalize_key_password(
+        password_b64, plain=env.get('SECRET_SNOWFLAKE_KEY_PASSWORD_PLAIN'))
     if private_key:
         key_path.parent.mkdir(parents=True, exist_ok=True)
         key_path.write_text(private_key, encoding='utf-8')
