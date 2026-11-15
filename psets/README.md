@@ -5,7 +5,7 @@ Durante el semestre construyes un solo proyecto de ciencia de datos, y cada PSet
 | PSet | Qué entrega | Semanas | Se asigna | Vence | Dónde queda en `proyecto/` |
 |---|---|---|---|---|---|
 | [PSet 1](./pset-01/README.md) | Propuesta del proyecto y su ambiente | 1 a 3 | Semana 2, Sesión 2 | Semana 4, Sesión 1 | `docs/`, `Dockerfile`, `requirements.txt`, `ingesta/`, `infra/` |
-| [PSet 2](./pset-02/README.md) | Pipeline de datos | 4 a 6, cerrado en la 7 | Semana 4, Sesión 1 | Semana 7, Sesión 2 | `orquestacion/`, `calidad/`, `warehouse/`, `procesamiento/` |
+| [PSet 2](./pset_2/README.md) | Pipeline de datos | 4 a 6, cerrado en la 7 | Semana 4, Sesión 1 | Semana 7, Sesión 2 | `orquestacion/`, `calidad/`, `warehouse/`, `procesamiento/` |
 | [PSet 3](./pset-03/README.md) | Exploración, features y modelo entrenado y trackeado | 8 (Sesión 2) a 11 | Semana 8, Sesión 2 | Semana 12, Sesión 1 | `modelado/` y `docs/decision_modelo.md` |
 | [PSet 4](./pset-04/README.md) | Despliegue, monitoreo y comunicación del modelo | 12 a 15 (Sesión 1) | Semana 12, Sesión 1 | Semana 15, Sesión 2 | `servicio/`, `monitoreo/` y `docs/` |
 

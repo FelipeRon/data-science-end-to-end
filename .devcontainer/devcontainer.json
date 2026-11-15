@@ -57,12 +57,12 @@
   "postCreateCommand": "bash .devcontainer/verificar.sh",
   "postStartCommand": {
     "mlflow": "bash .devcontainer/mlflow-server.sh",
-    "pset2": "bash psets/pset-02/scripts/codespaces.sh prepare --optional"
+    "pset2": "bash psets/pset_2/kestra/scripts/codespaces.sh prepare --optional"
   },
 
   "customizations": {
     "codespaces": {
-      "openFiles": ["psets/pset-02/README.md", "README.md"]
+      "openFiles": ["psets/pset_2/README.md", "README.md"]
     },
     "vscode": {
       "extensions": [
@@ -84,4 +84,5 @@
 
   "remoteUser": "vscode"
 }
+
 

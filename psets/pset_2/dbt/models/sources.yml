@@ -1,0 +1,6 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: ai4i_clean

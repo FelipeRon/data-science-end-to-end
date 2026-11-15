@@ -1,0 +1,14 @@
+name: pset2_local
+version: '1.0.0'
+config-version: 2
+profile: pset2_local
+model-paths: [models]
+test-paths: [tests]
+models:
+  pset2_local:
+    staging:
+      +materialized: view
+    intermedia:
+      +materialized: view
+    marts:
+      +materialized: table

@@ -1,0 +1,89 @@
+name: pset_2
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Ejecuta prepare}
+    volumes: [datos_postgres:/var/lib/postgresql]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U kestra]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  kestra:
+    image: kestra/kestra:v2.0.7
+    user: root
+    command: server standalone
+    env_file:
+      - path: kestra/.env.kestra
+        required: false
+    ports: ["${KESTRA_PORT:-8080}:8080"]
+    volumes:
+      - datos_kestra:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: ${POSTGRES_PASSWORD_JSON:?Ejecuta prepare}
+        kestra:
+          server:
+            basic-auth:
+              username: ${KESTRA_USER_JSON:-"admin@kestra.io"}
+              password: ${KESTRA_PASSWORD_JSON:?Ejecuta prepare}
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              base-path: /app/storage
+          queue:
+            type: postgres
+          tasks:
+            tmp-dir:
+              path: /tmp/kestra-wd/tmp
+          plugins:
+            configurations:
+              - type: io.kestra.plugin.scripts.runner.docker.Docker
+                values:
+                  volume-enabled: true
+          url: ${KESTRA_URL:-http://localhost:8080/}
+  pipeline:
+    image: pset2-pipeline:local
+    build:
+      context: .
+      dockerfile: kestra/runtime/Dockerfile
+    profiles: [tools]
+    env_file: .env
+    environment:
+      PSET2_DATA_DIR: /workspace/data
+    volumes:
+      - datos_pipeline:/workspace/data
+      - ./output:/workspace/output
+    command: [python, kestra/scripts/run_pipeline.py]
+  spark:
+    image: pset2-pipeline:local
+    build:
+      context: .
+      dockerfile: kestra/runtime/Dockerfile
+    profiles: [tools]
+    env_file: .env
+    environment:
+      PSET2_DATA_DIR: /workspace/data
+    volumes:
+      - datos_pipeline:/workspace/data
+      - ./output:/workspace/output
+    command: [python, spark/job_batch.py]
+volumes:
+  datos_postgres:
+  datos_kestra:
+  datos_pipeline:
+    name: ${PSET2_DATA_VOLUME:-pset_2_history}

@@ -1,0 +1,123 @@
+{
+  "date": "2026-11-15",
+  "scope": "Docker/Linux y Kestra aislado; no Codespace remoto ni nueva carga Snowflake",
+  "unit_tests_passed": 21,
+  "full_execution_id": "4l1WK3CA9J3jnNvuxtuJux",
+  "full_state": "SUCCESS",
+  "backfill_execution_id": "2FzKSDbwR0kJGkZCN8ittf",
+  "backfill_state": "SUCCESS",
+  "full": {
+    "ingesta_local.json": {
+      "source_rows": 10000,
+      "selected_rows": 10000,
+      "inserted_rows": 0,
+      "history_rows": 10000,
+      "source_sha256": "dc6630cd9b1f0f853922fad78a1b6436570d3f1ec863f1dd5c4340ac56bc8a8e"
+    },
+    "cadena_local.json": {
+      "target": "duckdb",
+      "clean_rows": 10000,
+      "warehouse_rows": 10000,
+      "spark_rows": 10000,
+      "same_clean_sha256": "507f4b04de4518f1bda04c65fe3114f200dd543e2a4fe6a12affdd3e94bb921e",
+      "dbt_run": "SUCCESS",
+      "dbt_test": "SUCCESS",
+      "spark_matches_dbt": true,
+      "spark_matches_pandas": true
+    },
+    "spark_local.json": {
+      "clean_rows": 10000,
+      "spark_rows": 10000,
+      "mart_groups": 3,
+      "matches_dbt": true,
+      "matches_pandas": true,
+      "clean_sha256": "507f4b04de4518f1bda04c65fe3114f200dd543e2a4fe6a12affdd3e94bb921e",
+      "question": "Proporcion de fallas observadas por tipo y version de fuente",
+      "mart": [
+        {
+          "SOURCE_SHA256": "dc6630cd9b1f0f853922fad78a1b6436570d3f1ec863f1dd5c4340ac56bc8a8e",
+          "TYPE": "H",
+          "OBSERVATIONS": 1003,
+          "FAILURES": 21,
+          "FAILURE_RATE": 0.020937188434695914,
+          "AVG_TORQUE_NM": 39.83828514456634
+        },
+        {
+          "SOURCE_SHA256": "dc6630cd9b1f0f853922fad78a1b6436570d3f1ec863f1dd5c4340ac56bc8a8e",
+          "TYPE": "L",
+          "OBSERVATIONS": 6000,
+          "FAILURES": 235,
+          "FAILURE_RATE": 0.03916666666666667,
+          "AVG_TORQUE_NM": 39.99659999999998
+        },
+        {
+          "SOURCE_SHA256": "dc6630cd9b1f0f853922fad78a1b6436570d3f1ec863f1dd5c4340ac56bc8a8e",
+          "TYPE": "M",
+          "OBSERVATIONS": 2997,
+          "FAILURES": 83,
+          "FAILURE_RATE": 0.02769436102769436,
+          "AVG_TORQUE_NM": 40.017250583917296
+        }
+      ]
+    },
+    "calidad_local.json": {
+      "rows": 10000,
+      "missing_by_column": {
+        "UDI": 0,
+        "AIR_TEMPERATURE_K": 0,
+        "PROCESS_TEMPERATURE_K": 0,
+        "ROTATIONAL_SPEED_RPM": 0,
+        "TORQUE_NM": 0,
+        "TOOL_WEAR_MIN": 0,
+        "MACHINE_FAILURE": 0,
+        "TWF": 0,
+        "HDF": 0,
+        "PWF": 0,
+        "OSF": 0,
+        "RNF": 0,
+        "PRODUCT_ID": 0,
+        "TYPE": 0
+      },
+      "comma_decimal_by_column": {
+        "AIR_TEMPERATURE_K": 0,
+        "PROCESS_TEMPERATURE_K": 0,
+        "ROTATIONAL_SPEED_RPM": 0,
+        "TORQUE_NM": 0,
+        "TOOL_WEAR_MIN": 0
+      },
+      "failed_numeric_casts": {
+        "UDI": 0,
+        "AIR_TEMPERATURE_K": 0,
+        "PROCESS_TEMPERATURE_K": 0,
+        "ROTATIONAL_SPEED_RPM": 0,
+        "TORQUE_NM": 0,
+        "TOOL_WEAR_MIN": 0,
+        "MACHINE_FAILURE": 0,
+        "TWF": 0,
+        "HDF": 0,
+        "PWF": 0,
+        "OSF": 0,
+        "RNF": 0
+      },
+      "duplicate_version_udi": 0,
+      "failure_flag_mismatches": 27,
+      "strategies": {
+        "missing": "No imputar: rechazar con motivo porque no hay soporte para inventar mediciones.",
+        "formats": "Quitar espacios; coma decimal a punto; convertir tipos con errores auditables.",
+        "duplicates": "Misma version+UDI: conservar menor SOURCE_ROW de forma determinista; auditar descarte.",
+        "validity": "UDI entero positivo, tipos L/M/H coherentes con producto, medidas fisicas basicas y flags 0/1.",
+        "mismatch": "Conservar y marcar: no se conoce cual etiqueta corregir."
+      },
+      "valid_rows": 10000,
+      "rejected_rows": 0,
+      "rejection_reasons": {}
+    }
+  },
+  "backfill_ingestion": {
+    "source_rows": 10000,
+    "selected_rows": 1000,
+    "inserted_rows": 0,
+    "history_rows": 10000,
+    "source_sha256": "dc6630cd9b1f0f853922fad78a1b6436570d3f1ec863f1dd5c4340ac56bc8a8e"
+  }
+}

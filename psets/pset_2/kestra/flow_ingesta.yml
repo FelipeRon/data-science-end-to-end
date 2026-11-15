@@ -1,0 +1,73 @@
+id: descargar_ai4i
+namespace: pset_2
+description: Historico AI4I, diagnostico, limpieza, DuckDB, dbt y Spark reconciliados; Snowflake opcional.
+concurrency:
+  limit: 1
+inputs:
+  - id: batch_id
+    type: INT
+    defaults: -1
+  - id: batch_size
+    type: INT
+    defaults: 1000
+  - id: target
+    type: STRING
+    defaults: duckdb
+variables:
+  account: MRIWLBX-HH95628
+  user: PSET2_KESTRA
+  role: PSET2_INGEST
+  warehouse: PSET2_WH
+  database: PSET2_MANTENIMIENTO
+  data_volume: pset_2_history
+tasks:
+  - id: descargar
+    type: io.kestra.plugin.core.http.Download
+    uri: https://archive.ics.uci.edu/static/public/601/ai4i%2B2020%2Bpredictive%2Bmaintenance%2Bdataset.zip
+    retry:
+      type: constant
+      interval: PT30S
+      maxAttempts: 3
+  - id: extraer
+    type: io.kestra.plugin.compress.ArchiveDecompress
+    from: "{{ outputs.descargar.uri }}"
+    algorithm: ZIP
+  - id: pipeline
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset2-pipeline:local
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+      volumes:
+        - "{{ vars.data_volume }}:/workspace/data"
+    namespaceFiles:
+      enabled: true
+      include: ["kestra/**", "dbt/**", "spark/**"]
+    inputFiles:
+      ai4i2020.csv: "{{ outputs.extraer.files['ai4i2020.csv'] }}"
+    env:
+      PYTHONPATH: "kestra:."
+      PSET2_DATA_DIR: /workspace/data
+      PIPELINE_TARGET: "{{ inputs.target }}"
+      SNOWFLAKE_ACCOUNT: "{{ vars.account }}"
+      SNOWFLAKE_USER: "{{ vars.user }}"
+      SNOWFLAKE_ROLE: "{{ vars.role }}"
+      SNOWFLAKE_WAREHOUSE: "{{ vars.warehouse }}"
+      SNOWFLAKE_DATABASE: "{{ vars.database }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ inputs.target == 'snowflake' ? secret('SNOWFLAKE_PRIVATE_KEY') : '' }}"
+      SNOWFLAKE_PRIVATE_KEY_PASSWORD: "{{ inputs.target == 'snowflake' ? secret('SNOWFLAKE_KEY_PASSWORD') : '' }}"
+      BATCH_ID: "{{ inputs.batch_id }}"
+      BATCH_SIZE: "{{ inputs.batch_size }}"
+    commands:
+      - python kestra/scripts/run_pipeline.py
+    outputFiles: ["output/*.json", "output/*.csv", "output/*.ipynb"]
+triggers:
+  - id: semanal
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 8 * * 5"
+    timezone: America/Guayaquil
+errors:
+  - id: error
+    type: io.kestra.plugin.core.log.Log
+    level: ERROR
+    message: "Fallo el pipeline. Revisar diagnostico y logs; el historico persiste sin duplicar retries."

@@ -1,0 +1,56 @@
+{
+  "version": "business_v1",
+  "status": "illustrative_not_plant_validated",
+  "currency": "USD",
+  "reference_plant": {
+    "machines": 20,
+    "shifts_per_day": 2,
+    "hours_per_shift": 8,
+    "days_per_week": 5,
+    "decision_opportunities_per_machine_day": 1,
+    "inspection_capacity_per_day": 5,
+    "contribution_margin_per_downtime_hour": 300
+  },
+  "costs": {
+    "planned_direct": 800,
+    "planned_downtime_hours": 2,
+    "emergency_direct": 2200,
+    "emergency_downtime_hours": 8,
+    "inspection_per_alert": 50,
+    "extra_delay_hours_if_missed": 4,
+    "extra_secondary_damage_if_missed": 800,
+    "monthly_model_operation": 200,
+    "first_year_setup": 1200
+  },
+  "rule": {
+    "version": "UCI_PHYSICS_WEAR200_v1",
+    "status": "candidate_expert_rule_not_expert_approved",
+    "heat_delta_below_k": 8.6,
+    "heat_speed_below_rpm": 1380,
+    "power_below_w": 3500,
+    "power_above_w": 9000,
+    "overstrain_above_min_nm": {"L": 11000, "M": 12000, "H": 13000},
+    "wear_at_least_min": 200
+  },
+  "sensitivity": {
+    "inspection_costs": [25, 50, 100],
+    "missed_delay_losses": [1000, 2000, 4000],
+    "contribution_margins_per_hour": [150, 300, 600],
+    "plant_loads": [
+      {"machines": 10, "opportunities_per_machine_day": 1},
+      {"machines": 20, "opportunities_per_machine_day": 1},
+      {"machines": 50, "opportunities_per_machine_day": 1},
+      {"machines": 20, "opportunities_per_machine_day": 3}
+    ]
+  },
+  "future_model_gate": {
+    "minimum_relative_cost_reduction_vs_best_baseline": 0.10,
+    "minimum_paired_bootstrap_95ci_lower_savings": 0,
+    "minimum_recall": 0.80,
+    "minimum_precision": 0.30,
+    "maximum_alerts_per_day": 5,
+    "require_real_prospective_pilot": true,
+    "require_sponsor_cost_approval": true
+  }
+}
+

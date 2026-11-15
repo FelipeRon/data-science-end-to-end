@@ -1,0 +1,20 @@
+version: 2
+models:
+  - name: stg_ai4i
+    columns:
+      - name: READING_KEY
+        tests: [not_null, unique]
+  - name: int_ai4i
+    columns:
+      - name: READING_KEY
+        tests: [not_null, unique]
+      - name: TYPE
+        tests:
+          - accepted_values:
+              values: ['L','M','H']
+  - name: mart_fallas_por_tipo
+    columns:
+      - name: SOURCE_SHA256
+        tests: [not_null]
+      - name: TYPE
+        tests: [not_null]

@@ -1,0 +1,26 @@
+erDiagram
+  DIM_PRODUCT ||--o{ FACT_READING : product_key
+  DIM_SOURCE ||--o{ FACT_READING : source_key
+  DIM_PRODUCT {
+    varchar product_key PK
+    varchar product_id
+    varchar product_type
+  }
+  DIM_SOURCE {
+    varchar source_key PK
+    varchar source_url
+    varchar source_name
+  }
+  FACT_READING {
+    varchar reading_key PK
+    integer udi
+    varchar product_key FK
+    varchar source_key FK
+    float air_temperature_k
+    float process_temperature_k
+    integer rotational_speed_rpm
+    float torque_nm
+    integer tool_wear_min
+    integer machine_failure
+  }
+

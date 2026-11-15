@@ -1,0 +1,16 @@
+flowchart LR
+  U[ZIP UCI AI4I] --> K[Kestra: descarga + retry + cron]
+  K --> H[(Historico persistente por hash y fila)]
+  H --> N[Notebook de diagnostico]
+  N --> L[limpiar.py]
+  L --> C[CSV limpio canonico]
+  C --> D[(DuckDB)]
+  D --> ST[dbt staging]
+  ST --> I[dbt intermedia]
+  I --> M[dbt marts]
+  C --> S[Spark: agregado batch]
+  M --> V[Verificar igualdad]
+  S --> V
+  C --> P[Pandas referencia]
+  P --> V
+  K -. opcional .-> SF[Snowflake RAW-BRONZE-SILVER-GOLD-OBT]
