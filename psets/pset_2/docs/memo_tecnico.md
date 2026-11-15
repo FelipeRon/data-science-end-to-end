@@ -4,7 +4,7 @@ Autor: Ron. Reorganización conforme a la rúbrica del curso, 15/11/2026.
 
 ## Arquitectura y alcance
 
-La ruta evaluable usa UCI AI4I, Kestra, CSV histórico/limpio, DuckDB, dbt y Spark. La ruta opcional conserva Snowflake RAW/BRONZE/SILVER/GOLD/OBT. Se separan explícitamente porque no son equivalentes ante una rúbrica que exige un mismo archivo limpio y un mismo `.duckdb`.
+La ruta evaluable usa UCI AI4I, Kestra, CSV histórico/limpio, DuckDB, dbt y Spark. La cadena debe completar Snowflake RAW/BRONZE/SILVER/GOLD/OBT. Se separan explícitamente porque no son equivalentes ante una rúbrica que exige un mismo archivo limpio y un mismo `.duckdb`.
 
 El target es la falla presente de una observación (t=0). El dataset sintético no ofrece una ventana validada para anticipar fallas futuras ni vida útil restante. Los costos y criterios de negocio siguen siendo propuestas documentadas, no evidencia de rentabilidad.
 

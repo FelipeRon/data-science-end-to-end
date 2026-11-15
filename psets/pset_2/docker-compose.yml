@@ -64,6 +64,7 @@ services:
     profiles: [tools]
     env_file: .env
     environment:
+      PIPELINE_TARGET: snowflake
       PSET2_DATA_DIR: /workspace/data
     volumes:
       - datos_pipeline:/workspace/data
@@ -77,6 +78,7 @@ services:
     profiles: [tools]
     env_file: .env
     environment:
+      PIPELINE_TARGET: snowflake
       PSET2_DATA_DIR: /workspace/data
     volumes:
       - datos_pipeline:/workspace/data

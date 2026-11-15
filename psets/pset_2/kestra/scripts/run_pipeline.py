@@ -1,4 +1,4 @@
-"""Una sola cadena evaluable; Snowflake es una ampliacion opcional."""
+"""Cadena completa con Snowflake obligatorio y conciliacion local."""
 import base64
 import json
 import os
@@ -15,6 +15,11 @@ def run(*args):
 
 
 def main():
+    if os.environ.get('PIPELINE_TARGET','snowflake') != 'snowflake':
+        raise ValueError('Snowflake es obligatorio')
+    from scripts.common import key_der
+    key_der()  # Credencial obligatoria antes de procesar datos.
+    Path('output/cadena_completa.json').unlink(missing_ok=True)
     data=Path(os.environ.get('PSET2_DATA_DIR','/workspace/data')).resolve()
     data.mkdir(parents=True,exist_ok=True)
     os.environ['PSET2_DATA_DIR']=str(data)
@@ -45,17 +50,18 @@ def main():
     for source,name in [(data/'raw/historico.csv','historico.csv'),(data/'processed/ai4i_clean.csv','ai4i_clean.csv')]:
         shutil.copy2(source,Path('output')/name)
     shutil.copy2('dbt/target/run_results.json','output/dbt_local_tests.json')
-    if os.environ.get('PIPELINE_TARGET','duckdb')=='snowflake':
-        from scripts.common import connect,database,key_der
-        os.environ['DBT_ENV_SECRET_PRIVATE_KEY']=base64.b64encode(key_der()).decode()
-        with connect() as conn:
-            with conn.cursor() as cur:
-                for schema in ('RAW','BRONZE','SILVER','GOLD','OBT'):
-                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {database()}.{schema}')
-        run(sys.executable,'kestra/ingesta_csv.py')
-        run('dbt','build','--project-dir','dbt/snowflake','--profiles-dir','dbt/snowflake')
-        run(sys.executable,'spark/construir_obt.py')
-        run(sys.executable,'kestra/scripts/evaluar_negocio.py')
+    from scripts.common import connect,database,key_der
+    os.environ['DBT_ENV_SECRET_PRIVATE_KEY']=base64.b64encode(key_der()).decode()
+    with connect() as conn:
+        with conn.cursor() as cur:
+            for schema in ('RAW','BRONZE','SILVER','GOLD','OBT'):
+                cur.execute(f'CREATE SCHEMA IF NOT EXISTS {database()}.{schema}')
+    run(sys.executable,'kestra/ingesta_csv.py')
+    run('dbt','build','--project-dir','dbt/snowflake','--profiles-dir','dbt/snowflake')
+    run(sys.executable,'spark/construir_obt.py')
+    run(sys.executable,'kestra/scripts/evaluar_negocio.py')
+    report('cadena_completa.json',{'target':'snowflake','status':'SUCCESS',
+           'local_reconciliation':'cadena_local.json','snowflake_layers':['RAW','BRONZE','SILVER','GOLD','OBT']})
 
 
 if __name__=='__main__':

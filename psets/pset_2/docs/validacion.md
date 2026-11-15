@@ -1,3 +1,5 @@
+> Actualización: Snowflake es obligatorio. Las evidencias locales siguientes corresponden a la versión anterior y no validan la cadena completa actual. Esta corrección se hizo sin pruebas ni ejecuciones, por solicitud del usuario.
+
 # Validación de la reorganización - 15/11/2026
 
 Se probó la cadena completa con UCI AI4I real, no solo una inspección de archivos. Entorno: Docker/Linux y una instancia aislada de Kestra 2.0.7 en el puerto de prueba 18080. La configuración publicada conserva 8080 como puerto normal.

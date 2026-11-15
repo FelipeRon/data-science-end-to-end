@@ -1,6 +1,6 @@
 # PSet 2 - Detección de fallas presentes AI4I
 
-La ruta de evaluación cumple la [rúbrica](docs/rubrica.md): **UCI → histórico → diagnóstico → limpiar.py → CSV limpio → DuckDB → dbt staging/intermedia/marts → Spark y reconciliación**. Kestra orquesta la misma imagen definida por Dockerfile/Compose. La ampliación Snowflake original se conserva como opción; no sustituye las verificaciones DuckDB de esta rúbrica.
+La ruta de evaluación cumple la [rúbrica](docs/rubrica.md): **UCI → histórico → diagnóstico → limpiar.py → CSV limpio → DuckDB → dbt staging/intermedia/marts → Spark y reconciliación**. Kestra orquesta la misma imagen definida por Dockerfile/Compose. **Snowflake es obligatorio**: la cadena completa termina con RAW, dbt BRONZE/SILVER/GOLD y Spark OBT. DuckDB se conserva para la conciliación exigida por la rúbrica.
 
 ## Estructura versionada
 
@@ -10,8 +10,8 @@ psets/pset_2/
 ├── .env.example
 ├── README.md
 ├── kestra/     # flow, calidad/, scripts/ y runtime/Dockerfile + lock
-├── dbt/        # staging/intermedia/marts; snowflake/ para la ampliación opcional
-├── spark/      # job_batch.py y construir_obt.py opcional
+├── dbt/        # staging/intermedia/marts; snowflake/ para Snowflake obligatorio
+├── spark/      # job_batch.py y construir_obt.py para OBT Snowflake
 └── docs/       # rúbrica, diagnóstico de cambios, documentación y tests/
 ```
 
@@ -20,7 +20,9 @@ psets/pset_2/
 ## Ejecutar desde un Codespace nuevo
 
 1. Abrir la rama **Felipe** en Codespaces. Para un Codespace existente, desde la raíz del repo ejecutar `git pull --ff-only origin Felipe` sin descartar cambios locales. La configuración `.devcontainer` usa Docker-in-Docker y requiere al menos 4 núcleos. Reconstruir el contenedor para aplicar cambios de configuración.
-2. Ejecutar desde la raíz del repositorio:
+2. Configurar Codespaces Secrets:  `SECRET_SNOWFLAKE_PRIVATE_KEY` (Base64 del PEM privado completo) y `SECRET_SNOWFLAKE_KEY_PASSWORD` (Base64 de la contraseña; vacío si no está cifrada). Autorizar el repositorio y detener/iniciar el Codespace para recibirlos. Ver [credenciales y permisos](docs/credenciales_codespaces.md).
+
+3. Ejecutar desde la raíz del repositorio:
 
 ```bash
 cd psets/pset_2
@@ -28,9 +30,9 @@ bash kestra/scripts/codespaces.sh start
 bash kestra/scripts/codespaces.sh run
 ```
 
-**DuckDB no requiere cuenta Snowflake, clave privada ni secretos externos.** La primera descarga de imágenes puede tardar varios minutos. `start` prepara `.env`, genera contraseñas locales aleatorias, construye `pset2-pipeline:local`, levanta PostgreSQL/Kestra e importa el código de namespace. `run` vuelve a importar el código actual, ejecuta y espera el estado final. No ejecutar `run` después de modificar dependencias sin volver a ejecutar `start` para reconstruir la imagen.
+**La cadena completa requiere Snowflake y sus credenciales.** `start` migra configuraciones anteriores a `PIPELINE_TARGET=snowflake`; sin clave privada se detiene. La primera descarga de imágenes puede tardar varios minutos. `start` prepara `.env`, genera contraseñas locales aleatorias, construye `pset2-pipeline:local`, levanta PostgreSQL/Kestra e importa el código de namespace. `run` vuelve a importar el código actual, ejecuta y espera el estado final. No ejecutar `run` después de modificar dependencias sin volver a ejecutar `start` para reconstruir la imagen.
 
-3. En **Ports**, abrir **8080** con visibilidad **Private**. Para consultar las credenciales locales generadas, ejecutar deliberadamente:
+4. En **Ports**, abrir **8080** con visibilidad **Private**. Para consultar las credenciales locales generadas, ejecutar deliberadamente:
 
 ```bash
 bash kestra/scripts/codespaces.sh credentials
@@ -51,7 +53,7 @@ No compartir su salida. El flow es `pset_2.descargar_ai4i`; las tres tareas debe
 
 `PSET2_DATA_DIR=/workspace/data` apunta al volumen persistente `pset_2_history`. Kestra lo monta en su runner y Compose lo usa para ejecuciones manuales. El límite de concurrencia del flow es 1; no lanzar a la vez ejecuciones manuales, porque ese límite no las protege. Cambiar el nombre del volumen crea otro histórico, no lo migra.
 
-El mart `mart_fallas_por_tipo` responde: **¿qué tipo de producto presenta mayor proporción observada de fallas?** Incluye observaciones, fallas, tasa y torque medio por versión y tipo. Es descriptivo, sin interpretación causal ni pronóstico del siguiente ciclo. Ver el [diagrama de arquitectura](docs/arquitectura.mmd) y el [modelo dimensional de la opción Snowflake](docs/modelo_dimensional.mmd).
+El mart `mart_fallas_por_tipo` responde: **¿qué tipo de producto presenta mayor proporción observada de fallas?** Incluye observaciones, fallas, tasa y torque medio por versión y tipo. Es descriptivo, sin interpretación causal ni pronóstico del siguiente ciclo. Ver el [diagrama de arquitectura](docs/arquitectura.mmd) y el [modelo dimensional de Snowflake](docs/modelo_dimensional.mmd).
 
 ## Reintento y horario justificados
 
@@ -93,16 +95,16 @@ docker compose run --rm pipeline python -c "import pandas as pd; d=pd.read_csv('
 
 `output/cadena_local.json` debe indicar el mismo conteo y hash del CSV para warehouse/Spark, `dbt_run=SUCCESS`, `dbt_test=SUCCESS`, `spark_matches_dbt=true` y `spark_matches_pandas=true`. La ejecución completa validada tuvo 10.000 filas y tres grupos del mart. Ver [cumplimiento de rúbrica](docs/cumplimiento_rubrica.md) y [validación](docs/validacion.md).
 
-## Snowflake opcional
+## Snowflake obligatorio
 
-Para conservar el alcance original Raw/Bronze/Silver/Gold/OBT de Snowflake, configurar claves **nuevas** mediante Codespaces Secrets como explica [credenciales_codespaces.md](docs/credenciales_codespaces.md). La clave anteriormente versionada debe rotarse; quitarla del último commit no la elimina del historial.
+Para ejecutar el alcance obligatorio Raw/Bronze/Silver/Gold/OBT de Snowflake, configurar claves **nuevas** mediante Codespaces Secrets como explica [credenciales_codespaces.md](docs/credenciales_codespaces.md). La clave anteriormente versionada debe rotarse; quitarla del último commit no la elimina del historial.
 
 ```bash
 PIPELINE_TARGET=snowflake bash kestra/scripts/codespaces.sh start
 bash kestra/scripts/codespaces.sh run --target snowflake
 ```
 
-Esta opción ejecuta primero todas las verificaciones DuckDB y luego la carga/modelado Snowflake. El proyecto dbt/snowflake conserva source/ref, Bronze/Silver/Gold, hechos/dimensiones y tests; `spark/construir_obt.py` construye la OBT en Snowflake. Los esquemas/roles se preparan con los SQL de `kestra/scripts/` por un administrador. La ruta opcional necesita permisos/secretos reales; no se afirma haberla revalidado durante esta reorganización.
+La cadena ejecuta primero todas las verificaciones DuckDB y luego la carga/modelado Snowflake. El proyecto dbt/snowflake conserva source/ref, Bronze/Silver/Gold, hechos/dimensiones y tests; `spark/construir_obt.py` construye la OBT en Snowflake. Los esquemas/roles se preparan con los SQL de `kestra/scripts/` por un administrador. Snowflake necesita permisos y secretos reales. `output/cadena_local.json` acredita solo la conciliación local; `output/cadena_completa.json` se genera únicamente después de completar Snowflake. Esta corrección se realizó sin ejecutar pruebas ni el pipeline.
 
 ## Alcance, datos y mantenimiento
 

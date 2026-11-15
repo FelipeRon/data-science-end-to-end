@@ -55,7 +55,7 @@ def prepare(root=ROOT, environ=None, optional=False):
     config = {key: env.get(key, local.get(key, default)) for key, default in DEFAULTS.items()}
     config['KESTRA_PASSWORD']=config['KESTRA_PASSWORD'] or secrets.token_urlsafe(18)
     postgres_password=env.get('POSTGRES_PASSWORD',local.get('POSTGRES_PASSWORD','')) or secrets.token_urlsafe(18)
-    target=env.get('PIPELINE_TARGET',local.get('PIPELINE_TARGET','duckdb'))
+    target='snowflake'  # Migrar tambien configuraciones locales anteriores.
     cloud = env.get('CODESPACES') == 'true'
     private_b64 = env.get('SECRET_SNOWFLAKE_PRIVATE_KEY') or (legacy.get('SECRET_SNOWFLAKE_PRIVATE_KEY') if not cloud else None)
     key_path = root / 'kestra/pset2_kestra.p8'
@@ -65,10 +65,8 @@ def prepare(root=ROOT, environ=None, optional=False):
         private_key = key_path.read_text(encoding='utf-8')
         private_b64 = base64.b64encode(private_key.encode()).decode()
     else:
-        if target=='duckdb':
-            private_key,private_b64='',''
-        elif optional:
-            print('Snowflake requiere secretos nuevos. La ruta DuckDB puede ejecutarse sin credenciales.')
+        if optional:
+            print('Snowflake es obligatorio. Configura SECRET_SNOWFLAKE_PRIVATE_KEY y vuelve a ejecutar start.')
             return False
         else:
             raise ValueError('Falta SECRET_SNOWFLAKE_PRIVATE_KEY. Configura una clave NUEVA en Codespaces Secrets.')

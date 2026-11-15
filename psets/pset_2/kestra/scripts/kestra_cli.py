@@ -103,7 +103,9 @@ class Client:
     def execute(self, batch_id, batch_size, wait=False, timeout=1800, target=None):
         if batch_id < -1 or batch_size <= 0:
             raise ValueError('batch_id debe ser -1 o un lote válido y batch_size debe ser positivo')
-        target=target or read_env(ROOT/'.env').get('PIPELINE_TARGET','duckdb')
+        target=target or 'snowflake'
+        if target != 'snowflake':
+            raise ValueError('Snowflake es obligatorio')
         data, kind = multipart({'batch_id': batch_id, 'batch_size': batch_size,'target':target})
         result = self.request(f'/executions/{NAMESPACE}/{FLOW_ID}', 'POST', data, kind)
         execution_id = result['id']
@@ -156,7 +158,7 @@ def main():
     parser.add_argument('--batch-id', type=int, default=-1)
     parser.add_argument('--batch-size', type=int, default=1000)
     parser.add_argument('--wait', action='store_true')
-    parser.add_argument('--target',choices=['duckdb','snowflake'])
+    parser.add_argument('--target',choices=['snowflake'])
     parser.add_argument('--timeout', type=int, default=1800)
     args = parser.parse_args()
     try:

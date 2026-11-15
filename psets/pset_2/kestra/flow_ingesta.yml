@@ -1,6 +1,6 @@
 id: descargar_ai4i
 namespace: pset_2
-description: Historico AI4I, diagnostico, limpieza, DuckDB, dbt y Spark reconciliados; Snowflake opcional.
+description: Historico AI4I, diagnostico, limpieza, DuckDB, dbt y Spark reconciliados; Snowflake RAW/BRONZE/SILVER/GOLD/OBT obligatorio.
 concurrency:
   limit: 1
 inputs:
@@ -12,7 +12,7 @@ inputs:
     defaults: 1000
   - id: target
     type: STRING
-    defaults: duckdb
+    defaults: snowflake
 variables:
   account: MRIWLBX-HH95628
   user: PSET2_KESTRA
@@ -48,14 +48,14 @@ tasks:
     env:
       PYTHONPATH: "kestra:."
       PSET2_DATA_DIR: /workspace/data
-      PIPELINE_TARGET: "{{ inputs.target }}"
+      PIPELINE_TARGET: snowflake
       SNOWFLAKE_ACCOUNT: "{{ vars.account }}"
       SNOWFLAKE_USER: "{{ vars.user }}"
       SNOWFLAKE_ROLE: "{{ vars.role }}"
       SNOWFLAKE_WAREHOUSE: "{{ vars.warehouse }}"
       SNOWFLAKE_DATABASE: "{{ vars.database }}"
-      SNOWFLAKE_PRIVATE_KEY: "{{ inputs.target == 'snowflake' ? secret('SNOWFLAKE_PRIVATE_KEY') : '' }}"
-      SNOWFLAKE_PRIVATE_KEY_PASSWORD: "{{ inputs.target == 'snowflake' ? secret('SNOWFLAKE_KEY_PASSWORD') : '' }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+      SNOWFLAKE_PRIVATE_KEY_PASSWORD: "{{ secret('SNOWFLAKE_KEY_PASSWORD') }}"
       BATCH_ID: "{{ inputs.batch_id }}"
       BATCH_SIZE: "{{ inputs.batch_size }}"
     commands:
