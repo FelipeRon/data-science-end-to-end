@@ -1,0 +1,15 @@
+version: 2
+sources:
+  - name: raw
+    database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+    schema: RAW
+    tables:
+      - name: ai4i
+        identifier: AI4I_OBSERVATIONS
+        description: Valores originales de AI4I como texto y metadatos de carga.
+        columns:
+          - name: UDI
+            tests: [not_null]
+          - name: SOURCE_SHA256
+            tests: [not_null]
+

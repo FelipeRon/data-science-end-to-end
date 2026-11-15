@@ -1,0 +1,9 @@
+{
+  "source_sha256": "dc6630cd9b1f0f853922fad78a1b6436570d3f1ec863f1dd5c4340ac56bc8a8e",
+  "source_rows": 10000,
+  "selected_rows": 1000,
+  "inserted_rows": 0,
+  "stored_rows": 10000,
+  "batch_id": 9,
+  "batch_size": 1000
+}

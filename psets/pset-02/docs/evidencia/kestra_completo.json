@@ -1,0 +1,117 @@
+{
+  "id": "1sczhToyQelLFf0HXV8ZwR",
+  "namespace": "pset2",
+  "flowId": "descargar_ai4i",
+  "flowRevision": 2,
+  "inputs": {
+    "batch_id": -1,
+    "batch_size": 1000
+  },
+  "state": {
+    "current": "SUCCESS",
+    "histories": [
+      {
+        "state": "CREATED",
+        "date": "2026-11-12T15:17:08.721103Z"
+      },
+      {
+        "state": "QUEUED",
+        "date": "2026-11-12T15:17:08.723416Z"
+      },
+      {
+        "state": "RUNNING",
+        "date": "2026-11-12T15:17:27.772698Z"
+      },
+      {
+        "state": "SUCCESS",
+        "date": "2026-11-12T15:18:26.629825Z"
+      }
+    ],
+    "duration": "PT1M17.908722S",
+    "startDate": "2026-11-12T15:17:08.721103Z",
+    "endDate": "2026-11-12T15:18:26.629825Z"
+  },
+  "tasks": [
+    {
+      "taskId": "descargar",
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2026-11-12T15:17:27.985641Z"
+          },
+          {
+            "state": "SUBMITTED",
+            "date": "2026-11-12T15:17:27.987882Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2026-11-12T15:17:28.008806Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2026-11-12T15:17:29.864617Z"
+          }
+        ],
+        "duration": "PT1.878976S",
+        "startDate": "2026-11-12T15:17:27.985641Z",
+        "endDate": "2026-11-12T15:17:29.864617Z"
+      }
+    },
+    {
+      "taskId": "extraer",
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2026-11-12T15:17:29.910031Z"
+          },
+          {
+            "state": "SUBMITTED",
+            "date": "2026-11-12T15:17:29.911238Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2026-11-12T15:17:29.939264Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2026-11-12T15:17:29.942607Z"
+          }
+        ],
+        "duration": "PT0.032576S",
+        "startDate": "2026-11-12T15:17:29.910031Z",
+        "endDate": "2026-11-12T15:17:29.942607Z"
+      }
+    },
+    {
+      "taskId": "pipeline",
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2026-11-12T15:17:30.003819Z"
+          },
+          {
+            "state": "SUBMITTED",
+            "date": "2026-11-12T15:17:30.005061Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2026-11-12T15:17:30.020171Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2026-11-12T15:18:26.323735Z"
+          }
+        ],
+        "duration": "PT56.319916S",
+        "startDate": "2026-11-12T15:17:30.003819Z",
+        "endDate": "2026-11-12T15:18:26.323735Z"
+      }
+    }
+  ]
+}

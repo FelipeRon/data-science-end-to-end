@@ -1,38 +1,92 @@
+"""Descarga AI4I o lee el CSV recibido de Kestra y carga RAW idempotente."""
+import hashlib
+import io
+import math
 import os
-from datetime import date
-from math import ceil
+from pathlib import Path
+import sys
+from urllib.request import urlopen
+import zipfile
 
-from kestra import Kestra
-from ucimlrepo import fetch_ucirepo
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from scripts.common import connect, database, report
 
-BATCH_SIZE = int(os.environ["BATCH_SIZE"])
-START_DATE = date.fromisoformat(os.environ["START_DATE"])
-RUN_DATE = date.fromisoformat(os.environ["RUN_DATE"])
+URL = "https://archive.ics.uci.edu/static/public/601/ai4i%2B2020%2Bpredictive%2Bmaintenance%2Bdataset.zip"
+HEADERS = ["UDI", "Product ID", "Type", "Air temperature [K]", "Process temperature [K]",
+           "Rotational speed [rpm]", "Torque [Nm]", "Tool wear [min]", "Machine failure",
+           "TWF", "HDF", "PWF", "OSF", "RNF"]
+COLUMNS = ["UDI", "PRODUCT_ID", "TYPE", "AIR_TEMPERATURE_K", "PROCESS_TEMPERATURE_K",
+           "ROTATIONAL_SPEED_RPM", "TORQUE_NM", "TOOL_WEAR_MIN", "MACHINE_FAILURE",
+           "TWF", "HDF", "PWF", "OSF", "RNF"]
 
-COLUMNS = ["udi", "product_id", "type", "air_temperature_k",
-           "process_temperature_k", "rotational_speed_rpm", "torque_nm",
-           "tool_wear_min", "machine_failure", "twf", "hdf", "pwf",
-           "osf", "rnf"]
 
-# 1. Descargar el dataset completo desde UCI
-df = fetch_ucirepo(id=601).data.original.copy()
+def select_batch(df, batch_id, batch_size):
+    if batch_size <= 0:
+        raise ValueError("BATCH_SIZE debe ser positivo")
+    if batch_id == -1:
+        return df.copy()
+    if not 0 <= batch_id < math.ceil(len(df) / batch_size):
+        raise ValueError("BATCH_ID fuera de rango; usar -1 para la fuente completa")
+    return df.iloc[batch_id * batch_size:(batch_id + 1) * batch_size].copy()
 
-# 2. Validar la fuente antes de usarla
-assert df.shape == (10000, 14), f"Forma inesperada: {df.shape}"
-df.columns = COLUMNS
-assert df["udi"].is_unique, "udi duplicado en la fuente"
-print(f"Fuente: {len(df)} filas, tasa de falla {df['machine_failure'].mean():.2%}")
 
-# 3. Seleccionar el lote que corresponde a la fecha de ejecución
-n_batches = ceil(len(df) / BATCH_SIZE)
-batch_no = (RUN_DATE - START_DATE).days
-if batch_no < 0:
-    raise ValueError(f"{RUN_DATE} es anterior a start_date {START_DATE}")
+def read_source():
+    path = Path(os.environ.get("SOURCE_CSV", "ai4i2020.csv"))
+    if path.exists():
+        return path.read_bytes()
+    with urlopen(URL, timeout=120) as response:
+        archive = response.read()
+    with zipfile.ZipFile(io.BytesIO(archive)) as zf:
+        return zf.read("ai4i2020.csv")
 
-    df = df.sort_values("udi")
-    batch = df.iloc[batch_no * BATCH_SIZE:(batch_no + 1) * BATCH_SIZE]
-    print(f"Lote {batch_no + 1} de {n_batches}: {len(batch)} filas")
 
-    batch.to_csv("ai4i_batch.csv", index=False)
-    Kestra.outputs({"rows": len(batch), "batch_id": RUN_DATE.isoformat(),
-                      "batch_no": batch_no, "n_batches": n_batches})
+def main():
+    import pandas as pd
+    from snowflake.connector.pandas_tools import write_pandas
+    raw = read_source()
+    digest = hashlib.sha256(raw).hexdigest()
+    # Todo se conserva como texto en RAW, sin imputación ni transformación de negocio.
+    df = pd.read_csv(io.BytesIO(raw), dtype=str, keep_default_na=False)
+    if list(df.columns) != HEADERS or len(df) != 10000:
+        raise ValueError("El contrato de AI4I cambió: se esperaban 10.000 filas y 14 columnas conocidas")
+    df.columns = COLUMNS
+    if not df.UDI.str.fullmatch(r"[0-9]+").all() or not df.UDI.is_unique:
+        raise ValueError("UDI vacío, no entero o repetido: se detiene la ingesta")
+    df = df.iloc[df.UDI.astype(int).argsort()].reset_index(drop=True)
+    batch_id = int(os.environ.get("BATCH_ID", "-1"))
+    batch_size = int(os.environ.get("BATCH_SIZE", "1000"))
+    batch = select_batch(df, batch_id, batch_size)
+    batch["SOURCE_SHA256"] = digest
+    batch["SOURCE_URL"] = URL
+    batch["BATCH_ID"] = str(batch_id)
+    db = database()
+    columns = COLUMNS + ["SOURCE_SHA256", "SOURCE_URL", "BATCH_ID"]
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"CREATE TABLE IF NOT EXISTS {db}.RAW.AI4I_OBSERVATIONS ("
+                        + ", ".join(f'"{c}" VARCHAR' for c in columns)
+                        + ", LOADED_AT TIMESTAMP_TZ DEFAULT CURRENT_TIMESTAMP())")
+            # Falla claramente si AI4I existía con una estructura diferente.
+            cur.execute(f"CREATE TEMPORARY TABLE {db}.RAW.AI4I_OBSERVATIONS_LOAD LIKE {db}.RAW.AI4I_OBSERVATIONS")
+        ok, _, count, _ = write_pandas(conn, batch, "AI4I_OBSERVATIONS_LOAD", database=db,
+                                       schema="RAW", auto_create_table=False)
+        if not ok or count != len(batch):
+            raise RuntimeError("Carga incompleta al staging temporal")
+        with conn.cursor() as cur:
+            cur.execute(f"""MERGE INTO {db}.RAW.AI4I_OBSERVATIONS t USING {db}.RAW.AI4I_OBSERVATIONS_LOAD s
+                ON t.SOURCE_SHA256 = s.SOURCE_SHA256 AND t.UDI = s.UDI
+                WHEN NOT MATCHED THEN INSERT ({','.join(columns)})
+                VALUES ({','.join('s.' + c for c in columns)})""")
+            inserted = cur.fetchone()[0]
+            cur.execute(f"SELECT COUNT(*), COUNT(DISTINCT UDI) FROM {db}.RAW.AI4I_OBSERVATIONS WHERE SOURCE_SHA256=%s", (digest,))
+            total, unique = cur.fetchone()
+            if total != unique:
+                raise RuntimeError("Duplicados en RAW para la misma versión de la fuente")
+    report("ingesta.json", {"source_sha256": digest, "source_rows": len(df),
+           "selected_rows": len(batch), "inserted_rows": inserted, "stored_rows": total,
+           "batch_id": batch_id, "batch_size": batch_size})
+
+
+if __name__ == "__main__":
+    main()
+

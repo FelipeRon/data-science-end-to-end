@@ -1,0 +1,22 @@
+{
+  "gold_rows": 10000,
+  "obt_rows": 10000,
+  "duplicate_reading_keys": 0,
+  "stored_rows": 10000,
+  "grain": "source_sha256 + udi",
+  "target": "MACHINE_FAILURE",
+  "horizon": "current_observation_only",
+  "baseline_rule": "UCI_PHYSICS_WEAR200_v1",
+  "excluded_features": [
+    "UDI",
+    "PRODUCT_ID",
+    "READING_KEY",
+    "LOADED_AT",
+    "SOURCE_KEY",
+    "SOURCE_URL",
+    "SOURCE_NAME",
+    "PRODUCT_KEY",
+    "BASELINE_ALERT",
+    "BASELINE_RULE_VERSION"
+  ]
+}

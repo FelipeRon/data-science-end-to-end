@@ -1,0 +1,13 @@
+flowchart LR
+  U[UCI: AI4I CSV estático] --> K[Kestra: trigger viernes 08:00 y retries]
+  K --> I[Python: contrato, staging temporal, MERGE]
+  I --> R[(Snowflake RAW)]
+  R --> B[dbt BRONZE: staging y tipos]
+  B --> S[dbt SILVER: calidad, válidos, rechazados]
+  S --> G[dbt GOLD: hechos y dimensiones]
+  G --> SP[Spark local 2: joins y features]
+  SP --> O[(Snowflake OBT)]
+  P[(PostgreSQL)] --- K
+  D[Docker Compose: Kestra, PostgreSQL, Spark y pipeline] --- K
+  D --- SP
+

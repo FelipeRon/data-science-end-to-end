@@ -1,0 +1,46 @@
+version: 2
+models:
+  - name: stg_ai4i
+    columns:
+      - name: reading_key
+        tests: [not_null, unique]
+  - name: ai4i_clean
+    columns:
+      - name: reading_key
+        tests: [not_null, unique]
+      - name: product_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['L', 'M', 'H']
+      - name: machine_failure
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
+              quote: false
+  - name: dim_product
+    columns:
+      - name: product_key
+        tests: [not_null, unique]
+  - name: dim_source
+    columns:
+      - name: source_key
+        tests: [not_null, unique]
+  - name: fact_reading
+    columns:
+      - name: reading_key
+        tests: [not_null, unique]
+      - name: product_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_product')
+              field: product_key
+      - name: source_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_source')
+              field: source_key
+

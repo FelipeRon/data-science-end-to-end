@@ -1,10 +1,26 @@
 id: descargar_ai4i
 namespace: pset2
-
+description: AI4I a RAW, dbt Bronze/Silver/Gold y OBT con Spark. Reejecutable por versión y UDI.
+concurrency:
+  limit: 1
+inputs:
+  - id: batch_id
+    type: INT
+    defaults: -1
+    description: "-1 carga completa; 0..9 backfill por lotes de 1000 filas"
+  - id: batch_size
+    type: INT
+    defaults: 1000
+variables:
+  account: MRIWLBX-HH95628
+  user: PSET2_KESTRA
+  role: PSET2_INGEST
+  warehouse: PSET2_WH
+  database: PSET2_MANTENIMIENTO
 tasks:
   - id: descargar
     type: io.kestra.plugin.core.http.Download
-    uri: "https://archive.ics.uci.edu/static/public/601/ai4i%2B2020%2Bpredictive%2Bmaintenance%2Bdataset.zip"
+    uri: https://archive.ics.uci.edu/static/public/601/ai4i%2B2020%2Bpredictive%2Bmaintenance%2Bdataset.zip
     retry:
       type: constant
       interval: PT30S
@@ -13,23 +29,47 @@ tasks:
     type: io.kestra.plugin.compress.ArchiveDecompress
     from: "{{ outputs.descargar.uri }}"
     algorithm: ZIP
-
+  - id: pipeline
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset2-pipeline:local
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+    namespaceFiles:
+      enabled: true
+      include:
+        - "scripts/**"
+        - "kestra/ingesta_csv.py"
+        - "dbt/**"
+        - "spark/**"
+    inputFiles:
+      ai4i2020.csv: "{{ outputs.extraer.files['ai4i2020.csv'] }}"
+    env:
+      PYTHONPATH: "."
+      SNOWFLAKE_ACCOUNT: "{{ vars.account }}"
+      SNOWFLAKE_USER: "{{ vars.user }}"
+      SNOWFLAKE_ROLE: "{{ vars.role }}"
+      SNOWFLAKE_WAREHOUSE: "{{ vars.warehouse }}"
+      SNOWFLAKE_DATABASE: "{{ vars.database }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+      SNOWFLAKE_PRIVATE_KEY_PASSWORD: "{{ secret('SNOWFLAKE_KEY_PASSWORD') }}"
+      BATCH_ID: "{{ inputs.batch_id }}"
+      BATCH_SIZE: "{{ inputs.batch_size }}"
+    commands:
+      - python scripts/run_pipeline.py
+    outputFiles:
+      - "output/*.json"
+    retry:
+      type: constant
+      interval: PT30S
+      maxAttempts: 3
 triggers:
   - id: semanal
     type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 8 * * 5"
     timezone: America/Guayaquil
-
-afterExecution:
-  - id: upload
-    type: io.kestra.plugin.jdbc.snowflake.Upload
-    fileName: ai4i2020.csv
-    from: "{{ outputs.extraer.files['ai4i2020.csv']}}"
-    prefix: uci
-    stageName: "@PSET2_MANTENIMIENTO.RAW.%AI4I"
-    url: jdbc:snowflake://MRIWLBX-HH95628.snowflakecomputing.com
-    database: PSET2_MANTENIMIENTO
-    privateKey: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
-    privateKeyPassword: "{{ secret('SNOWFLAKE_KEY_PASSWORD') }}"
-    username: PSET2_KESTRA
-    role: PSET2_INGEST
+errors:
+  - id: error
+    type: io.kestra.plugin.core.log.Log
+    level: ERROR
+    message: "Falló el pipeline AI4I. Revisar la tarea fallida; RAW es idempotente por SHA256 y UDI."
