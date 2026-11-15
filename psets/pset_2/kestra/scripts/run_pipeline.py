@@ -1,4 +1,5 @@
 """Cadena completa con Snowflake obligatorio y conciliacion local."""
+import fcntl
 import base64
 import json
 import os
@@ -14,7 +15,7 @@ def run(*args):
     subprocess.run(args,check=True)
 
 
-def main():
+def run_pipeline():
     if os.environ.get('PIPELINE_TARGET','snowflake') != 'snowflake':
         raise ValueError('Snowflake es obligatorio')
     from scripts.common import key_der
@@ -62,6 +63,18 @@ def main():
     run(sys.executable,'kestra/scripts/evaluar_negocio.py')
     report('cadena_completa.json',{'target':'snowflake','status':'SUCCESS',
            'local_reconciliation':'cadena_local.json','snowflake_layers':['RAW','BRONZE','SILVER','GOLD','OBT']})
+
+
+def main():
+    data=Path(os.environ.get('PSET2_DATA_DIR','/workspace/data')).resolve()
+    data.mkdir(parents=True,exist_ok=True)
+    # Kestra y Compose comparten este volumen: serializar toda la cadena,
+    # incluyendo lectores del CSV y escritores de DuckDB.
+    with (data/'.pipeline.lock').open('a') as lock:
+        print('Esperando acceso exclusivo al volumen del pipeline...',flush=True)
+        fcntl.flock(lock.fileno(),fcntl.LOCK_EX)
+        print('Acceso exclusivo adquirido.',flush=True)
+        run_pipeline()
 
 
 if __name__=='__main__':

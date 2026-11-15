@@ -51,7 +51,7 @@ No compartir su salida. El flow es `pset_2.descargar_ai4i`; las tres tareas debe
 | dbt | `dbt/` | `dbt run` y `dbt test` usan exactamente ese mismo `.duckdb`, por `PSET2_DUCKDB_PATH`. |
 | Spark | `spark/job_batch.py` | Lee el mismo CSV limpio, agrega por tipo/versión y exige igualdad con dbt y Pandas. |
 
-`PSET2_DATA_DIR=/workspace/data` apunta al volumen persistente `pset_2_history`. Kestra lo monta en su runner y Compose lo usa para ejecuciones manuales. El límite de concurrencia del flow es 1; no lanzar a la vez ejecuciones manuales, porque ese límite no las protege. Cambiar el nombre del volumen crea otro histórico, no lo migra.
+`PSET2_DATA_DIR=/workspace/data` apunta al volumen persistente `pset_2_history`. Kestra lo monta en su runner y Compose lo usa para ejecuciones manuales. El límite de concurrencia del flow es 1. Además, un bloqueo del volumen serializa la cadena completa entre Kestra y Compose. La ingesta tiene un bloqueo propio y temporales únicos para proteger la lectura, unión y reemplazo del histórico. Cambiar el nombre del volumen crea otro histórico, no lo migra.
 
 El mart `mart_fallas_por_tipo` responde: **¿qué tipo de producto presenta mayor proporción observada de fallas?** Incluye observaciones, fallas, tasa y torque medio por versión y tipo. Es descriptivo, sin interpretación causal ni pronóstico del siguiente ciclo. Ver el [diagrama de arquitectura](docs/arquitectura.mmd) y el [modelo dimensional de Snowflake](docs/modelo_dimensional.mmd).
 
@@ -127,3 +127,7 @@ No usar `down -v` para diagnosticar: eliminaría datos persistentes. El proyecto
 Tras actualizar el repositorio, usar `bash kestra/scripts/codespaces.sh start && bash kestra/scripts/codespaces.sh run`: `&&` evita ejecutar el flow si falla la preparación. No pegar claves en el chat ni versionarlas.
 
 Contraseña de clave: se conserva compatibilidad con `SECRET_SNOWFLAKE_KEY_PASSWORD` en Base64 y se acepta texto directo cuando no es Base64 UTF-8 válido. Para una contraseña literal que también pudiera interpretarse como Base64, configurar únicamente `SECRET_SNOWFLAKE_KEY_PASSWORD_PLAIN`. Este secreto tiene prioridad y siempre se trata como texto literal, sin recortar espacios. Sin cifrado, dejar ambos secretos sin configurar. Después de cambiar Codespaces Secrets, detener e iniciar el Codespace antes de ejecutar `start`.
+
+### Histórico y ejecuciones simultáneas
+
+La cadena espera un bloqueo exclusivo `.pipeline.lock` en el volumen persistente. La ingesta usa además `.historico.lock` y un temporal único por escritor, con reemplazo atómico de `historico.csv`. No borrar archivos de bloqueo ni el volumen para recuperar una ejecución. Antes de actualizar, esperar o cancelar ejecuciones anteriores que todavía usan el código viejo; después ejecutar `start` para reconstruir la imagen e importar el código actual. La corrección se publicó sin ejecutar pruebas ni el pipeline.
