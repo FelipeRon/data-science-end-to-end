@@ -48,6 +48,29 @@ def decode_secret(value, name):
         raise ValueError(f'{name} debe contener Base64 de texto UTF-8, no el valor sin codificar') from None
 
 
+
+def normalize_private_key(value):
+    """Acepta PEM directo o Base64 del PEM y devuelve una envoltura canonica."""
+    value = value.strip().lstrip('\ufeff')
+    if value.startswith('-----BEGIN '):
+        pem = value.replace('\\n', '\n')
+    else:
+        try:
+            pem = base64.b64decode(''.join(value.split()), validate=True).decode('utf-8')
+        except (ValueError, UnicodeDecodeError):
+            raise ValueError(
+                'SECRET_SNOWFLAKE_PRIVATE_KEY debe ser el PEM privado completo '
+                '(incluidos BEGIN/END) o su Base64; no una ruta ni una clave publica'
+            ) from None
+    pem = pem.strip().lstrip('\ufeff')
+    labels = ('PRIVATE KEY', 'ENCRYPTED PRIVATE KEY', 'RSA PRIVATE KEY')
+    label = next((label for label in labels
+                  if pem.startswith(f'-----BEGIN {label}-----')), None)
+    if label is None or not pem.endswith(f'-----END {label}-----'):
+        raise ValueError('SECRET_SNOWFLAKE_PRIVATE_KEY no contiene un PEM privado completo')
+    pem += '\n'
+    return pem, base64.b64encode(pem.encode('utf-8')).decode('ascii')
+
 def prepare(root=ROOT, environ=None, optional=False):
     env = dict(os.environ if environ is None else environ)
     local = read_env(root / '.env')
@@ -60,7 +83,7 @@ def prepare(root=ROOT, environ=None, optional=False):
     private_b64 = env.get('SECRET_SNOWFLAKE_PRIVATE_KEY') or (legacy.get('SECRET_SNOWFLAKE_PRIVATE_KEY') if not cloud else None)
     key_path = root / 'kestra/pset2_kestra.p8'
     if private_b64:
-        private_key = decode_secret(private_b64, 'SECRET_SNOWFLAKE_PRIVATE_KEY')
+        private_key, private_b64 = normalize_private_key(private_b64)
     elif key_path.is_file() and env.get('CODESPACES') != 'true':
         private_key = key_path.read_text(encoding='utf-8')
         private_b64 = base64.b64encode(private_key.encode()).decode()

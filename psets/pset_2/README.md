@@ -20,7 +20,7 @@ psets/pset_2/
 ## Ejecutar desde un Codespace nuevo
 
 1. Abrir la rama **Felipe** en Codespaces. Para un Codespace existente, desde la raíz del repo ejecutar `git pull --ff-only origin Felipe` sin descartar cambios locales. La configuración `.devcontainer` usa Docker-in-Docker y requiere al menos 4 núcleos. Reconstruir el contenedor para aplicar cambios de configuración.
-2. Configurar Codespaces Secrets:  `SECRET_SNOWFLAKE_PRIVATE_KEY` (Base64 del PEM privado completo) y `SECRET_SNOWFLAKE_KEY_PASSWORD` (Base64 de la contraseña; vacío si no está cifrada). Autorizar el repositorio y detener/iniciar el Codespace para recibirlos. Ver [credenciales y permisos](docs/credenciales_codespaces.md).
+2. Configurar Codespaces Secrets:  `SECRET_SNOWFLAKE_PRIVATE_KEY` (PEM privado completo (BEGIN/END incluidos) o su Base64) y `SECRET_SNOWFLAKE_KEY_PASSWORD` (Base64 de la contraseña; vacío si no está cifrada). Autorizar el repositorio y detener/iniciar el Codespace para recibirlos. Ver [credenciales y permisos](docs/credenciales_codespaces.md).
 
 3. Ejecutar desde la raíz del repositorio:
 
@@ -119,3 +119,9 @@ bash kestra/scripts/codespaces.sh stop
 ```
 
 No usar `down -v` para diagnosticar: eliminaría datos persistentes. El proyecto Compose nuevo se llama `pset_2`; los volúmenes anteriores de `pset2` no se borran ni migran automáticamente. La lista de archivos retirados/movidos está en [limpieza del repositorio](docs/limpieza_repositorio.md).
+
+### Error al preparar la clave
+
+`SECRET_SNOWFLAKE_PRIVATE_KEY` acepta el PEM privado completo o su Base64, también con saltos de línea. Se normaliza internamente para Kestra sin imprimirlo. No ingresar una ruta ni una clave pública. `SECRET_SNOWFLAKE_KEY_PASSWORD` sigue esperando Base64 de la contraseña; omitirlo si la clave no está cifrada.
+
+Tras actualizar el repositorio, usar `bash kestra/scripts/codespaces.sh start && bash kestra/scripts/codespaces.sh run`: `&&` evita ejecutar el flow si falla la preparación. No pegar claves en el chat ni versionarlas.
